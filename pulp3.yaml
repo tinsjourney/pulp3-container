@@ -1,0 +1,88 @@
+---
+- name: "Install Pulp3"
+  hosts: all
+  connection: local
+
+  vars:
+    my_super_SECRET_PASSWORD: "password"
+
+  tasks:
+  - name: "Pull all required images"
+    containers.podman.podman_image:
+      name: "{{ item }}"
+    loop:
+      - "docker.io/pulp/pulp:latest"
+
+  - name: "Create needed repository"
+    ansible.builtin.file:
+      path: "{{ item }}"
+      state: directory
+    with_items:
+      - "/pulp/settings/certs"
+      - "/pulp/pulp_storage"
+      - "/pulp/pgsql"
+      - "/pulp/containers"
+
+  - name: "Create pulp settings.py"
+    ansible.builtin.copy:
+      dest: "/pulp/settings/settings.py"
+      content: |
+        CONTENT_ORIGIN='https://{{ ansible_fqdn }}'
+        ANSIBLE_API_HOSTNAME='https://{{ ansible_fqdn }}'
+        ANSIBLE_CONTENT_HOSTNAME='https://{{ ansible_fqdn }}/pulp/content'
+        CACHE_ENABLED=True
+        ANALYTICS=False
+
+  - name: "Create pulp3 container"
+    containers.podman.podman_container:
+      name: pulp3
+      state: present
+      image: "docker.io/pulp/pulp"
+      publish:
+        - 8080:443
+      volumes: 
+        - "/pulp/settings:/etc/pulp:Z"
+        - "/pulp/pulp_storage:/var/lib/pulp:Z"
+        - "/pulp/pgsql:/var/lib/pgsql:Z"
+        - "/pulp/containers:/var/lib/containers:Z"
+      device:
+        - /dev/fuse
+      env:
+        PULP_HTTPS: true
+        PULP_WORKERS: 2
+        PULP_API_WORKERS: 2
+        PULP_CONTENT_WORKERS: 2
+      generate_systemd:
+        path: "~/.config/systemd/user"
+        new: true
+
+  - name: "Fix UpperCase issue with podman generate systemd"
+    ansible.builtin.lineinfile:
+      path: "~/.config/systemd/user/container-pulp3.service"
+      regexp: '^(\t)(.*)True(.*)$'
+      line: '\1\2true\3'
+      backrefs: yes
+
+  - name: "Start and enable pulp3"
+    ansible.builtin.systemd:
+      name: container-pulp3
+      daemon_reload: true
+      state: started
+      enabled: true
+      scope: user
+
+  - name: "Wait for pulp to initialize"
+    ansible.builtin.uri:
+      url: "https://localhost:8080/pulp/api/v3/status/"
+      follow_redirects: none
+      validate_certs: false
+      status_code: 200
+      return_content: no
+    register: result
+    until: result.status == 200
+    retries: 12 # 12 * 5 seconds = 1 minutes
+    delay: 5 # Every 5 seconds
+
+  - name: "Set Admin Password"
+    ansible.builtin.shell:
+      cmd: "podman exec pulp3 pulpcore-manager reset-admin-password --password {{ my_super_SECRET_PASSWORD }}"
