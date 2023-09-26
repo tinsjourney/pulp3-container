@@ -7,6 +7,16 @@
     my_super_SECRET_PASSWORD: "password"
 
   tasks:
+  - name: "Stat plup storage directory"
+    ansible.builtin.stat:
+      path: "/pulp"
+    register: st
+
+  - name: "Fail if user is not owner of /pulp directory"
+    ansible.builtin.fail:
+      msg: "Whoops! {{ ansible_effective_user_id }} is not owner of /pulp directory"
+    when: st.stat.uid != ansible_effective_user_id
+
   - name: "Pull all required images"
     containers.podman.podman_image:
       name: "{{ item }}"
