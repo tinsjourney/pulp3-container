@@ -50,7 +50,7 @@
       image: "docker.io/pulp/pulp"
       publish:
         - 8080:443
-      volumes: 
+      volumes:
         - "/pulp/settings:/etc/pulp:Z"
         - "/pulp/pulp_storage:/var/lib/pulp:Z"
         - "/pulp/pgsql:/var/lib/pgsql:Z"
@@ -80,6 +80,8 @@
       state: started
       enabled: true
       scope: user
+    environment:
+      XDG_RUNTIME_DIR: "/run/user/{{ ansible_effective_user_id }}"
 
   - name: "Wait for pulp to initialize"
     ansible.builtin.uri:
