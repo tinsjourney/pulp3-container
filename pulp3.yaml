@@ -58,20 +58,13 @@
       device:
         - /dev/fuse
       env:
-        PULP_HTTPS: true
+        PULP_HTTPS: "true"
         PULP_WORKERS: 2
         PULP_API_WORKERS: 2
         PULP_CONTENT_WORKERS: 2
       generate_systemd:
         path: "~/.config/systemd/user"
         new: true
-
-  - name: "Fix UpperCase issue with podman generate systemd"
-    ansible.builtin.lineinfile:
-      path: "~/.config/systemd/user/container-pulp3.service"
-      regexp: '^(\t)(.*)True(.*)$'
-      line: '\1\2true\3'
-      backrefs: yes
 
   - name: "Start and enable pulp3"
     ansible.builtin.systemd:
