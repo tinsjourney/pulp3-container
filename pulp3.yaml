@@ -49,7 +49,7 @@
       state: present
       image: "docker.io/pulp/pulp"
       publish:
-        - 8080:443
+        - 8443:443
       volumes:
         - "/pulp/settings:/etc/pulp:Z"
         - "/pulp/pulp_storage:/var/lib/pulp:Z"
@@ -85,7 +85,7 @@
 
   - name: "Wait for pulp to initialize"
     ansible.builtin.uri:
-      url: "https://localhost:8080/pulp/api/v3/status/"
+      url: "https://localhost:8443/pulp/api/v3/status/"
       follow_redirects: none
       validate_certs: false
       status_code: 200
@@ -99,7 +99,7 @@
     ansible.builtin.shell:
       cmd: "podman exec pulp3 pulpcore-manager reset-admin-password --password {{ my_super_SECRET_PASSWORD }}"
 
-  - name: "Redirect external 443 to localhost 8080"
+  - name: "Redirect external 443 to localhost 8443"
     ansible.posix.firewalld:
       zone: public
       permanent: true
@@ -108,5 +108,5 @@
       port_forward:
         - port: 443
           proto: tcp
-          toport: 8080
+          toport: 8443
     become: yes
