@@ -85,8 +85,8 @@
       return_content: no
     register: result
     until: result.status == 200
-    retries: 12 # 12 * 5 seconds = 1 minutes
-    delay: 5 # Every 5 seconds
+    retries: 12 # 12 * 10 seconds = 2 minutes
+    delay: 10 # Every 10 seconds
 
   - name: "Set Admin Password"
     ansible.builtin.shell:
