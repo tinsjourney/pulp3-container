@@ -1,0 +1,43 @@
+---
+- name: Make repository present
+  pulp.squeezer.rpm_repository:
+    name: "{{ item.name }}"
+    description: "{{ item.name }}"
+    state: present
+
+- name: Make remote present
+  pulp.squeezer.rpm_remote:
+    name: "{{ item.name }}"
+    url: "{{ item.url }}"
+    policy: on_demand
+    state: present
+
+- name: Sync remote into Repo
+  pulp.squeezer.rpm_sync:
+    remote: "{{ item.name }}"
+    repository: "{{ item.name }}"
+  register: sync_result
+
+- debug:
+    msg: "{{ sync_result }}"
+  #msg: "{{ sync_result.repository_version | regex_replace('(.)/versions.*$', '\\1') }}"
+
+- name: Create publication
+  pulp.squeezer.rpm_publication:
+    repository: "{{ item.name }}"
+    state: present
+  register: publication_result
+
+- debug:
+    msg: "{{ publication_result }}"
+
+- name: Create distribution
+  pulp.squeezer.rpm_distribution:
+    name: "{{ item.name }}"
+    base_path: "{{ item.path }}"
+    publication: "{{ publication_result.publication.pulp_href }}"
+    state: present
+  register: distrib_result
+
+- debug:
+    msg: "{{ distrib_result }}"

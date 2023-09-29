@@ -1,0 +1,40 @@
+---
+- name: "Create HPE SPP content"
+  hosts: localhost
+  connection: local
+
+  module_defaults: &pulp_module_defaults
+    pulp.squeezer.rpm_distribution: &pulp_connection_details
+      pulp_url: "{{ pulp_url }}"
+      username: "{{ pulp_username }}"
+      password: "{{ pulp_password }}"
+      validate_certs: "{{ pulp_validate_certs | default(true) }}"
+    pulp.squeezer.rpm_publication:
+      <<: *pulp_connection_details
+    pulp.squeezer.rpm_sync:
+      <<: *pulp_connection_details
+    pulp.squeezer.rpm_remote:
+      <<: *pulp_connection_details
+    pulp.squeezer.rpm_repository:
+      <<: *pulp_connection_details
+
+  vars:
+    pulp_url: "https://localhost:8443"
+    pulp_username: admin
+    pulp_password: password
+    pulp_validate_certs: false
+    rpm_repository:
+      - name: "HPE SPP Gen10 RHEL8"
+        url: "https://downloads.linux.hpe.com/SDR/repo/spp-gen10/redhat/8/x86_64/current/"
+        path: "hpe/spp/gen10/rhel8"
+      - name: "HPE SPP Gen10 RHEL9"
+        url: "https://downloads.linux.hpe.com/SDR/repo/spp-gen10/redhat/9/x86_64/current/"
+        path: "hpe/spp/gen10/rhel9"
+      - name: "HPE SPP Gen11 RHEL9"
+        url: "https://downloads.linux.hpe.com/SDR/repo/spp-gen11/redhat/9/x86_64/current/"
+        path: "hpe/spp/gen11/rhel9"
+
+  tasks:
+    - name: Create repos for each rpm_repository
+      include_tasks: create_content.yaml
+      loop: "{{ rpm_repository }}"
