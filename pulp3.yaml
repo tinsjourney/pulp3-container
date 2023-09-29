@@ -42,6 +42,7 @@
         ANSIBLE_CONTENT_HOSTNAME='https://{{ ansible_fqdn }}/pulp/content'
         CACHE_ENABLED=True
         ANALYTICS=False
+        ALLOWED_CONTENT_CHECKSUMS = ["md5", "sha1", "sha224", "sha256", "sha384", "sha512"]
 
   - name: "Create pulp3 container"
     containers.podman.podman_container:
