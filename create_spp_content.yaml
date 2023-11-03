@@ -1,7 +1,6 @@
 ---
 - name: "Create HPE SPP content"
-  hosts: localhost
-  connection: local
+  hosts: all
 
   module_defaults: &pulp_module_defaults
     pulp.squeezer.rpm_distribution: &pulp_connection_details

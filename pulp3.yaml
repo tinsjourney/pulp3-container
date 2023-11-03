@@ -1,7 +1,6 @@
 ---
 - name: "Install Pulp3"
   hosts: all
-  connection: local
 
   vars:
     my_super_SECRET_PASSWORD: "password"
